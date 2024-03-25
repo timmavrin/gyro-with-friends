@@ -1,0 +1,17 @@
+{
+  "files": [
+    "src/"
+  ],
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "scripts": {
+    "start": "parcel serve src/index.html",
+    "build": "cross-env NODE_ENV=production parcel build src/index.html --public-url .",
+    "deploy": "gh-pages -d dist"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "gh-pages": "^6.1.1",
+    "parcel": "^2.0.0",
+    "typescript": "^5.3.2"
+  }
+}
