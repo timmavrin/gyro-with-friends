@@ -585,12 +585,16 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 
 },{}],"h7u1C":[function(require,module,exports) {
 window.onload = ()=>{
-    var testInput = document.getElementById("test-input");
-    testInput?.addEventListener("input", (e)=>{
-        var inputElement = e.target;
-        var output = document.getElementById("test-input-result");
-        if (output) output.innerText = inputElement.value;
-    });
+    if (window.DeviceOrientationEvent) window.addEventListener("deviceorientation", (e)=>{
+        let alpha = document.getElementById("alpha");
+        let beta = document.getElementById("beta");
+        let gamma = document.getElementById("gamma");
+        if (alpha && beta && gamma) {
+            alpha.innerText = e.alpha?.toString() ?? "";
+            beta.innerText = e.beta?.toString() ?? "";
+            gamma.innerText = e.gamma?.toString() ?? "";
+        }
+    }, false);
 };
 
 },{}]},["fm8Gy","h7u1C"], "h7u1C", "parcelRequire94c2")
