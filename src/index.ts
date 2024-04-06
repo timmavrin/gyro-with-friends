@@ -1,11 +1,19 @@
 window.onload = () => {
-  var testInput = document.getElementById('test-input') as HTMLInputElement | null;
-  testInput?.addEventListener('input', (e: Event) => {
-    var inputElement = e.target as HTMLInputElement;
-    var output = document.getElementById('test-input-result') as HTMLHeadingElement | null;
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener(
+      'deviceorientation',
+      (e: DeviceOrientationEvent) => {
+        let alpha = document.getElementById('alpha');
+        let beta = document.getElementById('beta');
+        let gamma = document.getElementById('gamma');
 
-    if (output) {
-      output.innerText = inputElement.value;
-    }
-  });
+        if (alpha && beta && gamma) {
+          alpha.innerText = e.alpha?.toString() ?? '';
+          beta.innerText = e.beta?.toString() ?? '';
+          gamma.innerText = e.gamma?.toString() ?? '';
+        }
+      },
+      false
+    );
+  }
 };
