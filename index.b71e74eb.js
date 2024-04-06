@@ -142,11 +142,11 @@
       this[globalName] = mainExports;
     }
   }
-})({"fm8Gy":[function(require,module,exports) {
+})({"8wG6Z":[function(require,module,exports) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
-var HMR_SECURE = false;
+var HMR_SECURE = true;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
 var HMR_USE_SSE = false;
 module.bundle.HMR_BUNDLE_ID = "5c1b77e3b71e74eb";
@@ -584,19 +584,77 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 }
 
 },{}],"h7u1C":[function(require,module,exports) {
+var _gyro = require("./gyro");
+const _gyroRef = new (0, _gyro.Gyro)();
+let _alpha;
+let _beta;
+let _gamma;
 window.onload = ()=>{
+    // Setup
+    _alpha = document.getElementById("alpha");
+    _beta = document.getElementById("beta");
+    _gamma = document.getElementById("gamma");
     if (window.DeviceOrientationEvent) window.addEventListener("deviceorientation", (e)=>{
-        let alpha = document.getElementById("alpha");
-        let beta = document.getElementById("beta");
-        let gamma = document.getElementById("gamma");
-        if (alpha && beta && gamma) {
-            alpha.innerText = e.alpha?.toString() ?? "";
-            beta.innerText = e.beta?.toString() ?? "";
-            gamma.innerText = e.gamma?.toString() ?? "";
+        if (_alpha && _beta && _gamma && e.alpha && e.beta && e.gamma) {
+            _alpha.innerText = e.alpha - _gyroRef.alpha + "";
+            _beta.innerText = e.beta - _gyroRef.beta + "";
+            _gamma.innerText = e.gamma - _gyroRef.gamma + "";
         }
     }, false);
 };
 
-},{}]},["fm8Gy","h7u1C"], "h7u1C", "parcelRequire94c2")
+},{"./gyro":"7669u"}],"7669u":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Gyro", ()=>Gyro);
+class Gyro {
+    constructor(){
+        this.alpha = 0;
+        this.beta = 0;
+        this.gamma = 0;
+        this.calibrateCenter();
+    }
+    calibrateCenter() {
+        window.addEventListener("deviceorientation", (e)=>{
+            this.alpha = e.alpha ?? 0;
+            this.beta = e.beta ?? 0;
+            this.gamma = e.gamma ?? 0;
+        }, {
+            once: true
+        });
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, "__esModule", {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === "default" || key === "__esModule" || Object.prototype.hasOwnProperty.call(dest, key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
+
+},{}]},["8wG6Z","h7u1C"], "h7u1C", "parcelRequire94c2")
 
 //# sourceMappingURL=index.b71e74eb.js.map
