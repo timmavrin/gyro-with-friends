@@ -29,16 +29,21 @@ window.onload = () => {
           let yPos = centerY + (size / 20) * beta;
           if (_ctx && _gyroRef.isDrawing) {
             _ctx.beginPath();
-            _ctx.arc(xPos, yPos, 20, 0, 2 * Math.PI, true);
-            _ctx.strokeStyle = '#000';
-            _ctx.stroke();
+            _ctx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
+            _ctx.fillStyle = '#000';
+            _ctx.fill();
           }
           if (_ctxPoint) {
             _ctxPoint.clearRect(0, 0, size, size);
             _ctxPoint.beginPath();
             _ctxPoint.arc(xPos, yPos, 20, 0, 2 * Math.PI, true);
-            _ctxPoint.strokeStyle = '#000';
+            _ctxPoint.strokeStyle = '#333';
             _ctxPoint.stroke();
+
+            _ctxPoint.beginPath();
+            _ctxPoint.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
+            _ctxPoint.fillStyle = '#000';
+            _ctxPoint.fill();
           }
         }
       },
