@@ -4,15 +4,39 @@ html {
 }
 
 #container {
-  width: 100%;
+  --canvas-size: min(calc(100vh - 120px), calc(100vw - 16px));
+  width: var(--canvas-size);
   height: 100%;
   display: flex;
   flex-direction: column;
   font-size: larger;
 }
 
+#canvas-container {
+  position: relative;
+  width: var(--canvas-size);
+  height: var(--canvas-size);
+  border: 1px solid gray;
+}
+
+.canvas {
+  position: absolute;
+  width: var(--canvas-size);
+  height: var(--canvas-size);
+  top: 0;
+  left: 0;
+}
+
 #canvas {
-  width: 100%;
+  z-index: 0;
+}
+#pointer-canvas {
+  z-index: 1;
+}
+
+#draw-button {
   flex: 1;
-  border: 1px solid black;
+  font-size: 10vw;
+  user-select: none;
+  width: 100%;
 }

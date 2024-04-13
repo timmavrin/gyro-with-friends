@@ -9,10 +9,11 @@
 
   <body>
     <div id="container">
-      <h1>Alpha/Yaw: <span id="alpha"></span></h1>
-      <h1>Beta/Pitch: <span id="beta"></span></h1>
-      <h1>Gamma/Roll: <span id="gamma"></span></h1>
-      <canvas id="canvas" width="200" height="200"></canvas>
+      <div id="canvas-container">
+        <canvas id="canvas" class="canvas" width="400" height="400"></canvas>
+        <canvas id="pointer-canvas" class="canvas" width="400" height="400"></canvas>
+      </div>
+      <button id="draw-button">Draw</button>
     </div>
   </body>
 </html>

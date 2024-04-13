@@ -1,4 +1,5 @@
 export class Gyro {
+  isDrawing: boolean = false;
   alpha: number = 0;
   beta: number = 0;
   gamma: number = 0;
