@@ -39,6 +39,7 @@ body {
 }
 
 #draw-button {
+  background: linear-gradient(90deg, red, yellow, green, blue, purple, black);
   font-size: 10vw;
   user-select: none;
   width: 100%;
