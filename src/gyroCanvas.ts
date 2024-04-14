@@ -1,5 +1,6 @@
 export class GyroCanvas {
   readonly squarePixels = 1000;
+  isDrawing: boolean = false;
   drawCtx: CanvasRenderingContext2D;
   pointerCtx: CanvasRenderingContext2D;
   constructor() {
@@ -14,7 +15,7 @@ export class GyroCanvas {
     pointerLayer.id = 'pointerCanvas';
   }
 
-  registerParent = (parent: Element | null) => {
+  registerParent(parent: Element | null) {
     if (parent) {
       const parentElement = parent as HTMLElement;
       const cssSize = Math.min(window.innerHeight, window.innerWidth);
@@ -22,5 +23,5 @@ export class GyroCanvas {
       parent.appendChild(this.drawCtx.canvas);
       parent.appendChild(this.pointerCtx.canvas);
     }
-  };
+  }
 }
