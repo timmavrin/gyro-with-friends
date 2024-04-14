@@ -1,59 +1,54 @@
 import { Gyro } from './gyro';
+import { GyroCanvas } from './gyroCanvas';
 
 const _gyroRef = new Gyro();
-let _ctx: CanvasRenderingContext2D | null;
-let _ctxPoint: CanvasRenderingContext2D | null;
+const _canvas = new GyroCanvas();
 
 window.onload = () => {
-  // Setup
+  _canvas.registerParent(document.querySelector('#canvas-container'));
 
-  const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-  const pointerCanvas = document.getElementById('pointer-canvas') as HTMLCanvasElement;
-  const size = Math.min(window.innerHeight, window.innerWidth);
-  canvas.width = canvas.height = size;
-  pointerCanvas.width = pointerCanvas.height = size;
-
-  _ctx = canvas.getContext('2d');
-  _ctxPoint = (document.querySelector('#pointer-canvas') as HTMLCanvasElement)?.getContext('2d');
-  if (window.DeviceOrientationEvent) {
-    window.addEventListener(
-      'deviceorientation',
-      (e: DeviceOrientationEvent) => {
-        if (e.alpha && e.beta && e.gamma) {
-          let beta = e.beta - _gyroRef.beta;
-          let gamma = e.gamma - _gyroRef.gamma;
-          let centerX = size / 2;
-          let centerY = size / 2;
-
-          let xPos = centerX + (size / 20) * gamma;
-          let yPos = centerY + (size / 20) * beta;
-          if (_ctx && _gyroRef.isDrawing) {
-            _ctx.beginPath();
-            _ctx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
-            _ctx.fillStyle = '#000';
-            _ctx.fill();
-          }
-          if (_ctxPoint) {
-            _ctxPoint.clearRect(0, 0, size, size);
-            _ctxPoint.beginPath();
-            _ctxPoint.arc(xPos, yPos, 20, 0, 2 * Math.PI, true);
-            _ctxPoint.strokeStyle = '#333';
-            _ctxPoint.stroke();
-
-            _ctxPoint.beginPath();
-            _ctxPoint.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
-            _ctxPoint.fillStyle = '#000';
-            _ctxPoint.fill();
-          }
-        }
-      },
-      false
-    );
-  }
   document.querySelector('#draw-button')?.addEventListener('pointerdown', (e) => {
     _gyroRef.isDrawing = true;
   });
-  document.querySelector('#draw-button')?.addEventListener('pointerup', (e) => {
+  document.querySelector('#draw-button')?.addEventListener('pointerleave', (e) => {
     _gyroRef.isDrawing = false;
   });
+  document.querySelector('#calibrate-button')?.addEventListener('pointerdown', (e) => {
+    _gyroRef.betaMax = 0;
+    _gyroRef.gammaMax = 0;
+    _gyroRef.isCalibrating = true;
+  });
+  document.querySelector('#calibrate-button')?.addEventListener('pointerleave', (e) => {
+    _gyroRef.isCalibrating = false;
+  });
+  window.requestAnimationFrame(draw);
+};
+
+const draw = () => {
+  if (_gyroRef.isCalibrating) {
+    _gyroRef.calibrateMax();
+  }
+  let centerX = _canvas.squarePixels / 2;
+  let centerY = _canvas.squarePixels / 2;
+
+  let xPos = centerX + (_canvas.squarePixels * _gyroRef.gammaPercent) / 2;
+  let yPos = centerY + (_canvas.squarePixels * _gyroRef.betaPercent) / 2;
+  if (_gyroRef.isDrawing) {
+    _canvas.drawCtx.beginPath();
+    _canvas.drawCtx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
+    _canvas.drawCtx.fillStyle = '#000';
+    _canvas.drawCtx.fill();
+  }
+
+  _canvas.pointerCtx.clearRect(0, 0, _canvas.squarePixels, _canvas.squarePixels);
+  _canvas.pointerCtx.beginPath();
+  _canvas.pointerCtx.arc(xPos, yPos, 20, 0, 2 * Math.PI, true);
+  _canvas.pointerCtx.strokeStyle = '#333';
+  _canvas.pointerCtx.stroke();
+
+  _canvas.pointerCtx.beginPath();
+  _canvas.pointerCtx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
+  _canvas.pointerCtx.fillStyle = '#000';
+  _canvas.pointerCtx.fill();
+  window.requestAnimationFrame(draw);
 };

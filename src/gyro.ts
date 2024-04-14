@@ -1,22 +1,58 @@
 export class Gyro {
+  isCalibrating: boolean = false;
   isDrawing: boolean = false;
-  alpha: number = 0;
+
+  betaOffset: number = 0;
+  gammaOffset: number = 0;
+  betaMax: number = 45;
+  gammaMax: number = 45;
+
   beta: number = 0;
   gamma: number = 0;
 
+  betaPercent: number = 0;
+  gammaPercent: number = 0;
+
   constructor() {
     this.calibrateCenter();
+    window.addEventListener(
+      'deviceorientation',
+      (e: DeviceOrientationEvent) => {
+        if (e.beta && e.gamma) {
+          this.beta = e.beta - this.betaOffset;
+          if (this.beta > 180) this.beta = -180 - this.beta;
+          else if (this.beta < -180) this.beta = -(180 - this.beta);
+
+          this.gamma = e.gamma - this.gammaOffset;
+          if (this.gamma > 90) this.gamma = -90 - this.gamma;
+          else if (this.gamma < -90) this.gamma = -(90 - this.gamma);
+
+          this.betaPercent = 0;
+          if (this.beta < 0) this.betaPercent = Math.max(-this.betaMax, this.beta) / this.betaMax;
+          else if (this.beta > 0) this.betaPercent = Math.min(this.betaMax, this.beta) / this.betaMax;
+
+          this.gammaPercent = 0;
+          if (this.gamma < 0) this.gammaPercent = Math.max(-this.gammaMax, this.gamma) / this.gammaMax;
+          else if (this.gamma > 0) this.gammaPercent = Math.min(this.gammaMax, this.gamma) / this.gammaMax;
+        }
+      },
+      false
+    );
   }
 
   calibrateCenter() {
     window.addEventListener(
       'deviceorientation',
       (e: DeviceOrientationEvent) => {
-        this.alpha = e.alpha ?? 0;
-        this.beta = e.beta ?? 0;
-        this.gamma = e.gamma ?? 0;
+        this.betaOffset = e.beta ?? 0;
+        this.gammaOffset = e.gamma ?? 0;
       },
       { once: true }
     );
+  }
+
+  calibrateMax() {
+    this.betaMax = Math.max(this.betaMax, Math.abs(this.betaMax));
+    this.gammaMax = Math.max(this.gammaMax, Math.abs(this.gammaMax));
   }
 }
