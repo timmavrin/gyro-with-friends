@@ -4,8 +4,11 @@ export class Gyro {
 
   betaOffset: number = 0;
   gammaOffset: number = 0;
+
   betaMax: number = 45;
   gammaMax: number = 45;
+  calBetaMax: number = 0;
+  calGammaMax: number = 0;
 
   beta: number = 0;
   gamma: number = 0;
@@ -52,7 +55,7 @@ export class Gyro {
   }
 
   calibrateMax() {
-    this.betaMax = Math.max(this.betaMax, Math.abs(this.betaMax));
-    this.gammaMax = Math.max(this.gammaMax, Math.abs(this.gammaMax));
+    this.calBetaMax = Math.max(this.calBetaMax, Math.abs(this.beta));
+    this.calGammaMax = Math.max(this.calGammaMax, Math.abs(this.gamma));
   }
 }
