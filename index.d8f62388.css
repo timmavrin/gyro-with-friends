@@ -1,0 +1,2 @@
+html{width:100%;height:100%}#container{width:var(--canvas-size);flex-direction:column;height:100%;font-size:larger;display:flex}#canvas-container{width:var(--canvas-size);height:var(--canvas-size);border:1px solid gray;position:relative}.canvas{width:var(--canvas-size);height:var(--canvas-size);position:absolute;top:0;left:0}#canvas{z-index:0}#pointer-canvas{z-index:1}#draw-button,#calibrate-button{-webkit-user-select:none;user-select:none;width:100%;height:500px;font-size:10vw}
+/*# sourceMappingURL=index.d8f62388.css.map */

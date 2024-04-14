@@ -585,61 +585,96 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 
 },{}],"h7u1C":[function(require,module,exports) {
 var _gyro = require("./gyro");
+var _gyroCanvas = require("./gyroCanvas");
 const _gyroRef = new (0, _gyro.Gyro)();
-let _alpha;
-let _beta;
-let _gamma;
-let _ctx;
+const _canvas = new (0, _gyroCanvas.GyroCanvas)();
 window.onload = ()=>{
-    // Setup
-    _alpha = document.getElementById("alpha");
-    _beta = document.getElementById("beta");
-    _gamma = document.getElementById("gamma");
-    const canvas = document.getElementById("canvas");
-    const size = Math.min(window.innerHeight, window.innerWidth);
-    canvas.width = canvas.height = size;
-    _ctx = canvas.getContext("2d");
-    if (window.DeviceOrientationEvent) window.addEventListener("deviceorientation", (e)=>{
-        if (_alpha && _beta && _gamma && e.alpha && e.beta && e.gamma) {
-            // _alpha.innerText = e.alpha - _gyroRef.alpha + '';
-            // _beta.innerText = e.beta - _gyroRef.beta + '';
-            // _gamma.innerText = e.gamma - _gyroRef.gamma + '';
-            let beta = e.beta - _gyroRef.beta;
-            let gamma = e.gamma - _gyroRef.gamma;
-            let centerX = size / 2;
-            let centerY = size / 2;
-            let xPos = centerX + size / 20 * gamma;
-            let yPos = centerY + size / 20 * beta;
-            if (_ctx) {
-                _ctx.clearRect(0, 0, size, size);
-                _ctx.beginPath();
-                _ctx.arc(xPos, yPos, 20, 0, 2 * Math.PI, true);
-                _ctx.strokeStyle = "#000";
-                _ctx.stroke();
-            }
-        }
-    }, false);
+    _canvas.registerParent(document.querySelector("#canvas-container"));
+    document.querySelector("#draw-button")?.addEventListener("pointerdown", (e)=>{
+        _gyroRef.isDrawing = true;
+    });
+    document.querySelector("#draw-button")?.addEventListener("pointerleave", (e)=>{
+        _gyroRef.isDrawing = false;
+    });
+    document.querySelector("#calibrate-button")?.addEventListener("pointerdown", (e)=>{
+        _gyroRef.betaMax = 0;
+        _gyroRef.gammaMax = 0;
+        _gyroRef.isCalibrating = true;
+    });
+    document.querySelector("#calibrate-button")?.addEventListener("pointerleave", (e)=>{
+        _gyroRef.isCalibrating = false;
+    });
+    window.requestAnimationFrame(draw);
+};
+const draw = ()=>{
+    if (_gyroRef.isCalibrating) _gyroRef.calibrateMax();
+    let centerX = _canvas.squarePixels / 2;
+    let centerY = _canvas.squarePixels / 2;
+    let xPos = centerX + _canvas.squarePixels * _gyroRef.gammaPercent / 2;
+    let yPos = centerY + _canvas.squarePixels * _gyroRef.betaPercent / 2;
+    if (_gyroRef.isDrawing) {
+        _canvas.drawCtx.beginPath();
+        _canvas.drawCtx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
+        _canvas.drawCtx.fillStyle = "#000";
+        _canvas.drawCtx.fill();
+    }
+    _canvas.pointerCtx.clearRect(0, 0, _canvas.squarePixels, _canvas.squarePixels);
+    _canvas.pointerCtx.beginPath();
+    _canvas.pointerCtx.arc(xPos, yPos, 20, 0, 2 * Math.PI, true);
+    _canvas.pointerCtx.strokeStyle = "#333";
+    _canvas.pointerCtx.stroke();
+    _canvas.pointerCtx.beginPath();
+    _canvas.pointerCtx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
+    _canvas.pointerCtx.fillStyle = "#000";
+    _canvas.pointerCtx.fill();
+    window.requestAnimationFrame(draw);
 };
 
-},{"./gyro":"7669u"}],"7669u":[function(require,module,exports) {
+},{"./gyro":"7669u","./gyroCanvas":"QBQiV"}],"7669u":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Gyro", ()=>Gyro);
 class Gyro {
     constructor(){
-        this.alpha = 0;
+        this.isCalibrating = false;
+        this.isDrawing = false;
+        this.betaOffset = 0;
+        this.gammaOffset = 0;
+        this.betaMax = 45;
+        this.gammaMax = 45;
         this.beta = 0;
         this.gamma = 0;
+        this.betaPercent = 0;
+        this.gammaPercent = 0;
         this.calibrateCenter();
+        window.addEventListener("deviceorientation", (e)=>{
+            if (e.beta && e.gamma) {
+                this.beta = e.beta - this.betaOffset;
+                if (this.beta > 180) this.beta = -180 - this.beta;
+                else if (this.beta < -180) this.beta = -(180 - this.beta);
+                this.gamma = e.gamma - this.gammaOffset;
+                if (this.gamma > 90) this.gamma = -90 - this.gamma;
+                else if (this.gamma < -90) this.gamma = -(90 - this.gamma);
+                this.betaPercent = 0;
+                if (this.beta < 0) this.betaPercent = Math.max(-this.betaMax, this.beta) / this.betaMax;
+                else if (this.beta > 0) this.betaPercent = Math.min(this.betaMax, this.beta) / this.betaMax;
+                this.gammaPercent = 0;
+                if (this.gamma < 0) this.gammaPercent = Math.max(-this.gammaMax, this.gamma) / this.gammaMax;
+                else if (this.gamma > 0) this.gammaPercent = Math.min(this.gammaMax, this.gamma) / this.gammaMax;
+            }
+        }, false);
     }
     calibrateCenter() {
         window.addEventListener("deviceorientation", (e)=>{
-            this.alpha = e.alpha ?? 0;
-            this.beta = e.beta ?? 0;
-            this.gamma = e.gamma ?? 0;
+            this.betaOffset = e.beta ?? 0;
+            this.gammaOffset = e.gamma ?? 0;
         }, {
             once: true
         });
+    }
+    calibrateMax() {
+        this.betaMax = Math.max(this.betaMax, Math.abs(this.betaMax));
+        this.gammaMax = Math.max(this.gammaMax, Math.abs(this.gammaMax));
     }
 }
 
@@ -673,6 +708,34 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}]},["8wG6Z","h7u1C"], "h7u1C", "parcelRequire94c2")
+},{}],"QBQiV":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "GyroCanvas", ()=>GyroCanvas);
+class GyroCanvas {
+    constructor(){
+        this.squarePixels = 1000;
+        this.registerParent = (parent)=>{
+            if (parent) {
+                const parentElement = parent;
+                const cssSize = Math.min(window.innerHeight, window.innerWidth);
+                parentElement.style.setProperty("--canvas-size", cssSize + "px");
+                parent.appendChild(this.drawCtx.canvas);
+                parent.appendChild(this.pointerCtx.canvas);
+            }
+        };
+        const drawLayer = document.createElement("canvas");
+        const pointerLayer = document.createElement("canvas");
+        this.drawCtx = drawLayer.getContext("2d");
+        this.pointerCtx = pointerLayer.getContext("2d");
+        // Assign canvas pixel size
+        drawLayer.height = drawLayer.width = pointerLayer.height = pointerLayer.width = this.squarePixels;
+        drawLayer.className = pointerLayer.className = "canvas";
+        drawLayer.id = "canvas";
+        pointerLayer.id = "pointerCanvas";
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["8wG6Z","h7u1C"], "h7u1C", "parcelRequire94c2")
 
 //# sourceMappingURL=index.b71e74eb.js.map
