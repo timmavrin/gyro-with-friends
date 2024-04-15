@@ -8,6 +8,10 @@ window.onload = () => {
   _canvas.registerParent(document.querySelector('#canvas-container'));
 
   document.querySelector('#draw-button')?.addEventListener('touchstart', (e) => {
+    const te = e as TouchEvent;
+    const percent = te.touches[0].clientX / _canvas.squarePixels;
+    const [r, g, b] = _canvas.gradient.pickColor(percent);
+    _canvas.color = `rgb(${r},${g},${b})`;
     _canvas.isDrawing = true;
   });
   document.querySelector('#draw-button')?.addEventListener('touchend', (e) => {
@@ -34,7 +38,7 @@ const draw = () => {
     if (_canvas.isDrawing) {
       _canvas.drawCtx.beginPath();
       _canvas.drawCtx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
-      _canvas.drawCtx.fillStyle = '#000';
+      _canvas.drawCtx.fillStyle = _canvas.color;
       _canvas.drawCtx.fill();
     }
 
