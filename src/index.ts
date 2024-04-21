@@ -6,15 +6,17 @@ const _canvas = new GyroCanvas();
 
 window.onload = () => {
   _canvas.registerParent(document.querySelector('#canvas-container'));
-
-  document.querySelector('#draw-button')?.addEventListener('touchstart', (e) => {
-    const te = e as TouchEvent;
-    const percent = te.touches[0].clientX / _canvas.squarePixels;
-    const [r, g, b] = _canvas.gradient.pickColor(percent);
-    _canvas.color = `rgb(${r},${g},${b})`;
+  let _drawButton = document.querySelector('#draw-button');
+  _drawButton?.addEventListener('touchstart', (e) => {
     _canvas.isDrawing = true;
+    // Set color the first time
+    _canvas.color = getHSL((e as TouchEvent).touches[0].clientX);
   });
-  document.querySelector('#draw-button')?.addEventListener('touchend', (e) => {
+  _drawButton?.addEventListener('touchmove', (e) => {
+    // Keep setting the color
+    _canvas.color = getHSL((e as TouchEvent).touches[0].clientX);
+  });
+  _drawButton?.addEventListener('touchend', () => {
     _canvas.isDrawing = false;
   });
   document.querySelector('#calibrate-button')?.addEventListener('touchstart', (e) => {
@@ -24,6 +26,10 @@ window.onload = () => {
     _gyroRef.endCalibration();
   });
   window.requestAnimationFrame(draw);
+};
+
+const getHSL = (clientX: number) => {
+  return `hsl(${(360 * clientX) / window.innerWidth} 100 50)`;
 };
 
 const draw = () => {

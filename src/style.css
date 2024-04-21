@@ -39,7 +39,9 @@ body {
 }
 
 #draw-button {
-  background: linear-gradient(90deg, red, yellow, green, blue, purple, black);
+  background-image: linear-gradient(90deg in hsl longer hue, hsl(0, 100%, 50%), hsl(365 100 50));
+  /* background: -webkit-linear-gradient(to right in hsl, hsl(0 50 50), hsl(180 50 50)); */
+  /* background: -moz-linear-gradient(to right in hsl, hsl(0 50 50), hsl(180 50 50)); */
   font-size: 10vw;
   user-select: none;
   width: 100%;
