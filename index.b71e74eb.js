@@ -591,6 +591,7 @@ const _canvas = new (0, _gyroCanvas.GyroCanvas)();
 window.onload = ()=>{
     _canvas.registerParent(document.querySelector("#canvas-container"));
     let _drawButton = document.querySelector("#draw-button");
+    let _requestButton = document.querySelector("#permission");
     _drawButton?.addEventListener("touchstart", (e)=>{
         _canvas.isDrawing = true;
         // Set color the first time
@@ -603,6 +604,21 @@ window.onload = ()=>{
     _drawButton?.addEventListener("touchend", ()=>{
         _canvas.isDrawing = false;
     });
+    setTimeout(()=>{
+        if (!_gyroRef._hasPermission) {
+            _drawButton.style.display = "none";
+            _requestButton.style.display = "block";
+            _requestButton.addEventListener("touchend", ()=>{
+                if ("requestPermission" in DeviceOrientationEvent && typeof DeviceOrientationEvent["requestPermission"] === "function") DeviceOrientationEvent.requestPermission().then((status)=>{
+                    if (status === "granted") {
+                        _gyroRef.listen();
+                        _drawButton.style.display = "block";
+                        _requestButton.style.display = "none";
+                    }
+                });
+            });
+        } else _gyroRef.listen();
+    }, 100);
     document.querySelector("#calibrate-button")?.addEventListener("touchstart", (e)=>{
         _gyroRef.startCalibration();
     });
@@ -647,6 +663,7 @@ parcelHelpers.export(exports, "Gyro", ()=>Gyro);
 class Gyro {
     constructor(){
         this._isCalibrating = false;
+        this._hasPermission = false;
         /** Is the gyroscope in calibration mode? */ this.isCalibrating = ()=>this._isCalibrating;
         /** Y-Axis, Percentage of current beta angle from calibrated 0 - Max angle. */ this.betaPercent = 0;
         /** X-Axis, Percentage of current gamma angle from calibrated 0 - Max angle. */ this.gammaPercent = 0;
@@ -658,10 +675,16 @@ class Gyro {
         this.gammaOffset = 0;
         this.gammaMax = 45;
         this.calibrateCenter();
-        window.addEventListener("deviceorientation", this.listenToOrientation.bind(this), true);
+        window.addEventListener("deviceorientation", ()=>this._hasPermission = true, {
+            once: true
+        });
     }
     [Symbol.dispose]() {
         window.removeEventListener("deviceorientation", this.listenToOrientation.bind(this), true);
+    }
+    listen() {
+        window.removeEventListener("deviceorientation", this.listenToOrientation.bind(this), true);
+        window.addEventListener("deviceorientation", this.listenToOrientation.bind(this), true);
     }
     listenToOrientation(e) {
         if (e.beta && e.gamma) {

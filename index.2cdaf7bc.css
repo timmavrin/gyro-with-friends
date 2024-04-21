@@ -40,12 +40,23 @@ body {
 }
 
 #draw-button {
-  background-image: linear-gradient(90deg in hsl longer hue, red, hsl(365 100 50));
+  background: -moz-linear-gradient(90deg in hsl longer hue, red, hsl(365 100 50));
+  background: -webkit-linear-gradient(90deg in hsl longer hue, red, hsl(365 100 50));
+  background: linear-gradient(90deg in hsl longer hue, red, hsl(365 100 50));
   -webkit-user-select: none;
   user-select: none;
   width: 100%;
   height: 400px;
   font-size: 10vw;
+}
+
+#permission {
+  text-align: center;
+  width: 100%;
+  height: 400px;
+  margin: auto;
+  font-size: 10vw;
+  display: none;
 }
 
 #calibrate-button {
