@@ -590,43 +590,53 @@ const _gyroRef = new (0, _gyro.Gyro)();
 const _canvas = new (0, _gyroCanvas.GyroCanvas)();
 window.onload = ()=>{
     _canvas.registerParent(document.querySelector("#canvas-container"));
-    document.querySelector("#draw-button")?.addEventListener("pointerdown", (e)=>{
-        _gyroRef.isDrawing = true;
+    let _drawButton = document.querySelector("#draw-button");
+    _drawButton?.addEventListener("touchstart", (e)=>{
+        _canvas.isDrawing = true;
+        // Set color the first time
+        _canvas.color = getHSL(e.touches[0].clientX);
     });
-    document.querySelector("#draw-button")?.addEventListener("pointerleave", (e)=>{
-        _gyroRef.isDrawing = false;
+    _drawButton?.addEventListener("touchmove", (e)=>{
+        // Keep setting the color
+        _canvas.color = getHSL(e.touches[0].clientX);
     });
-    document.querySelector("#calibrate-button")?.addEventListener("pointerdown", (e)=>{
-        _gyroRef.betaMax = 0;
-        _gyroRef.gammaMax = 0;
-        _gyroRef.isCalibrating = true;
+    _drawButton?.addEventListener("touchend", ()=>{
+        _canvas.isDrawing = false;
     });
-    document.querySelector("#calibrate-button")?.addEventListener("pointerleave", (e)=>{
-        _gyroRef.isCalibrating = false;
+    document.querySelector("#calibrate-button")?.addEventListener("touchstart", (e)=>{
+        _gyroRef.startCalibration();
+    });
+    document.querySelector("#calibrate-button")?.addEventListener("touchend", (e)=>{
+        _gyroRef.endCalibration();
     });
     window.requestAnimationFrame(draw);
 };
+const getHSL = (clientX)=>{
+    return `hsl(${360 * clientX / window.innerWidth} 100 50)`;
+};
 const draw = ()=>{
-    if (_gyroRef.isCalibrating) _gyroRef.calibrateMax();
-    let centerX = _canvas.squarePixels / 2;
-    let centerY = _canvas.squarePixels / 2;
-    let xPos = centerX + _canvas.squarePixels * _gyroRef.gammaPercent / 2;
-    let yPos = centerY + _canvas.squarePixels * _gyroRef.betaPercent / 2;
-    if (_gyroRef.isDrawing) {
-        _canvas.drawCtx.beginPath();
-        _canvas.drawCtx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
-        _canvas.drawCtx.fillStyle = "#000";
-        _canvas.drawCtx.fill();
+    if (_gyroRef.isCalibrating()) _gyroRef.calibrateMax();
+    else {
+        let centerX = _canvas.squarePixels / 2;
+        let centerY = _canvas.squarePixels / 2;
+        let xPos = centerX + _canvas.squarePixels * _gyroRef.gammaPercent / 2;
+        let yPos = centerY + _canvas.squarePixels * _gyroRef.betaPercent / 2;
+        if (_canvas.isDrawing) {
+            _canvas.drawCtx.beginPath();
+            _canvas.drawCtx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
+            _canvas.drawCtx.fillStyle = _canvas.color;
+            _canvas.drawCtx.fill();
+        }
+        _canvas.pointerCtx.clearRect(0, 0, _canvas.squarePixels, _canvas.squarePixels);
+        _canvas.pointerCtx.beginPath();
+        _canvas.pointerCtx.arc(xPos, yPos, 20, 0, 2 * Math.PI, true);
+        _canvas.pointerCtx.strokeStyle = "#333";
+        _canvas.pointerCtx.stroke();
+        _canvas.pointerCtx.beginPath();
+        _canvas.pointerCtx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
+        _canvas.pointerCtx.fillStyle = "#000";
+        _canvas.pointerCtx.fill();
     }
-    _canvas.pointerCtx.clearRect(0, 0, _canvas.squarePixels, _canvas.squarePixels);
-    _canvas.pointerCtx.beginPath();
-    _canvas.pointerCtx.arc(xPos, yPos, 20, 0, 2 * Math.PI, true);
-    _canvas.pointerCtx.strokeStyle = "#333";
-    _canvas.pointerCtx.stroke();
-    _canvas.pointerCtx.beginPath();
-    _canvas.pointerCtx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
-    _canvas.pointerCtx.fillStyle = "#000";
-    _canvas.pointerCtx.fill();
     window.requestAnimationFrame(draw);
 };
 
@@ -636,35 +646,40 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Gyro", ()=>Gyro);
 class Gyro {
     constructor(){
-        this.isCalibrating = false;
-        this.isDrawing = false;
-        this.betaOffset = 0;
-        this.gammaOffset = 0;
-        this.betaMax = 45;
-        this.gammaMax = 45;
+        this._isCalibrating = false;
+        /** Is the gyroscope in calibration mode? */ this.isCalibrating = ()=>this._isCalibrating;
+        /** Y-Axis, Percentage of current beta angle from calibrated 0 - Max angle. */ this.betaPercent = 0;
+        /** X-Axis, Percentage of current gamma angle from calibrated 0 - Max angle. */ this.gammaPercent = 0;
+        // Internal Stuff
         this.beta = 0;
+        this.betaOffset = 0;
+        this.betaMax = 45;
         this.gamma = 0;
-        this.betaPercent = 0;
-        this.gammaPercent = 0;
+        this.gammaOffset = 0;
+        this.gammaMax = 45;
         this.calibrateCenter();
-        window.addEventListener("deviceorientation", (e)=>{
-            if (e.beta && e.gamma) {
-                this.beta = e.beta - this.betaOffset;
-                if (this.beta > 180) this.beta = -180 - this.beta;
-                else if (this.beta < -180) this.beta = -(180 - this.beta);
-                this.gamma = e.gamma - this.gammaOffset;
-                if (this.gamma > 90) this.gamma = -90 - this.gamma;
-                else if (this.gamma < -90) this.gamma = -(90 - this.gamma);
-                this.betaPercent = 0;
-                if (this.beta < 0) this.betaPercent = Math.max(-this.betaMax, this.beta) / this.betaMax;
-                else if (this.beta > 0) this.betaPercent = Math.min(this.betaMax, this.beta) / this.betaMax;
-                this.gammaPercent = 0;
-                if (this.gamma < 0) this.gammaPercent = Math.max(-this.gammaMax, this.gamma) / this.gammaMax;
-                else if (this.gamma > 0) this.gammaPercent = Math.min(this.gammaMax, this.gamma) / this.gammaMax;
-            }
-        }, false);
+        window.addEventListener("deviceorientation", this.listenToOrientation.bind(this), true);
     }
-    calibrateCenter() {
+    [Symbol.dispose]() {
+        window.removeEventListener("deviceorientation", this.listenToOrientation.bind(this), true);
+    }
+    listenToOrientation(e) {
+        if (e.beta && e.gamma) {
+            this.beta = e.beta - this.betaOffset;
+            if (this.beta > 180) this.beta = -180 - this.beta;
+            else if (this.beta < -180) this.beta = -(180 - this.beta);
+            this.gamma = e.gamma - this.gammaOffset;
+            if (this.gamma > 90) this.gamma = -90 - this.gamma;
+            else if (this.gamma < -90) this.gamma = -(90 - this.gamma);
+            this.betaPercent = 0;
+            if (this.beta < 0) this.betaPercent = Math.max(-this.betaMax, this.beta) / this.betaMax;
+            else if (this.beta > 0) this.betaPercent = Math.min(this.betaMax, this.beta) / this.betaMax;
+            this.gammaPercent = 0;
+            if (this.gamma < 0) this.gammaPercent = Math.max(-this.gammaMax, this.gamma) / this.gammaMax;
+            else if (this.gamma > 0) this.gammaPercent = Math.min(this.gammaMax, this.gamma) / this.gammaMax;
+        }
+    }
+    /**Calibrates the starting angles that correspond to the reticle being at the center of the screen.*/ calibrateCenter() {
         window.addEventListener("deviceorientation", (e)=>{
             this.betaOffset = e.beta ?? 0;
             this.gammaOffset = e.gamma ?? 0;
@@ -672,9 +687,22 @@ class Gyro {
             once: true
         });
     }
-    calibrateMax() {
-        this.betaMax = Math.max(this.betaMax, Math.abs(this.betaMax));
-        this.gammaMax = Math.max(this.gammaMax, Math.abs(this.gammaMax));
+    startCalibration() {
+        this._isCalibrating = true;
+        this.calibrateCenter();
+        this.betaMax = 5;
+        this.gammaMax = 5;
+    }
+    endCalibration() {
+        this._isCalibrating = false;
+    }
+    /**In calibration mode, this function is called multiple times.
+   * As the user tilts the device at comfortable angles, an absolute value of the angles are recorded.
+   * Calibrating for small tilts makes it more sensitive.
+   * Calibrating big tilts make it more precise
+   */ calibrateMax() {
+        this.betaMax = Math.max(this.betaMax, Math.abs(this.beta));
+        this.gammaMax = Math.max(this.gammaMax, Math.abs(this.gamma));
     }
 }
 
@@ -715,15 +743,8 @@ parcelHelpers.export(exports, "GyroCanvas", ()=>GyroCanvas);
 class GyroCanvas {
     constructor(){
         this.squarePixels = 1000;
-        this.registerParent = (parent)=>{
-            if (parent) {
-                const parentElement = parent;
-                const cssSize = Math.min(window.innerHeight, window.innerWidth);
-                parentElement.style.setProperty("--canvas-size", cssSize + "px");
-                parent.appendChild(this.drawCtx.canvas);
-                parent.appendChild(this.pointerCtx.canvas);
-            }
-        };
+        this.isDrawing = false;
+        this.color = "rgb(0,0,0)";
         const drawLayer = document.createElement("canvas");
         const pointerLayer = document.createElement("canvas");
         this.drawCtx = drawLayer.getContext("2d");
@@ -733,6 +754,15 @@ class GyroCanvas {
         drawLayer.className = pointerLayer.className = "canvas";
         drawLayer.id = "canvas";
         pointerLayer.id = "pointerCanvas";
+    }
+    registerParent(parent) {
+        if (parent) {
+            const parentElement = parent;
+            const cssSize = Math.min(window.innerHeight, window.innerWidth);
+            parentElement.style.setProperty("--canvas-size", cssSize + "px");
+            parent.appendChild(this.drawCtx.canvas);
+            parent.appendChild(this.pointerCtx.canvas);
+        }
     }
 }
 

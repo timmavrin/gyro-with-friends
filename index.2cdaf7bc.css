@@ -1,6 +1,11 @@
 html {
+  touch-action: manipulation;
   width: 100%;
   height: 100%;
+}
+
+body {
+  margin: 0;
 }
 
 #container {
@@ -34,11 +39,20 @@ html {
   z-index: 1;
 }
 
-#draw-button, #calibrate-button {
+#draw-button {
+  background-image: linear-gradient(90deg in hsl longer hue, red, hsl(365 100 50));
   -webkit-user-select: none;
   user-select: none;
   width: 100%;
-  height: 500px;
+  height: 400px;
+  font-size: 10vw;
+}
+
+#calibrate-button {
+  -webkit-user-select: none;
+  user-select: none;
+  width: 100%;
+  height: 400px;
   font-size: 10vw;
 }
 /*# sourceMappingURL=index.2cdaf7bc.css.map */
