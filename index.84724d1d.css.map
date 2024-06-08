@@ -1,0 +1,1 @@
+{"mappings":"AAAA;;;;AAIA","sources":["src/pages/title/title.css"],"sourcesContent":[".big-text {\r\n  font-size: 200px;\r\n}\r\n\r\n.big-button {\r\n  width: 100%;\r\n  height: 300px;\r\n  font-size: 200px;\r\n}\r\n"],"names":[],"version":3,"file":"index.84724d1d.css.map","sourceRoot":"/__parcel_source_root/"}

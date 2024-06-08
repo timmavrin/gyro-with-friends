@@ -1,7 +1,3 @@
-html {
-  height: 100%;
-}
-
 body {
   flex-direction: column;
   width: 100%;
@@ -73,8 +69,4 @@ body {
   height: 400px;
   font-size: 10vw;
 }
-
-.big-text {
-  font-size: 200px;
-}
-/*# sourceMappingURL=index.2cdaf7bc.css.map */
+/*# sourceMappingURL=draw.e90ac014.css.map */

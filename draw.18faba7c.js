@@ -142,14 +142,14 @@
       this[globalName] = mainExports;
     }
   }
-})({"8wG6Z":[function(require,module,exports) {
+})({"kt7pJ":[function(require,module,exports) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
 var HMR_SECURE = true;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
 var HMR_USE_SSE = false;
-module.bundle.HMR_BUNDLE_ID = "5c1b77e3b71e74eb";
+module.bundle.HMR_BUNDLE_ID = "70506e9718faba7c";
 "use strict";
 /* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, HMR_USE_SSE, chrome, browser, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
 import type {
@@ -583,160 +583,52 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
     });
 }
 
-},{}],"h7u1C":[function(require,module,exports) {
-var _title = require("./pages/title/title");
-window.onload = ()=>{
-    (0, _title.renderTitle)();
-};
-
-},{"./pages/title/title":"5VyRa"}],"5VyRa":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "removeTitle", ()=>removeTitle);
-parcelHelpers.export(exports, "renderTitle", ()=>renderTitle);
-var _helpers = require("../../helpers");
-var _draw = require("../draw/draw");
-const DOEvent = DeviceOrientationEvent;
-const removeTitle = ()=>{
-    document.querySelector("#title-page")?.remove();
-    document.body.replaceChildren();
-};
-const renderTitle = ()=>{
-    const page = (0, _helpers.create)("div", {
-        id: "title-page"
-    });
-    const title = (0, _helpers.create)("h1", {
-        innerText: "Gyro",
-        className: "title-header"
-    });
-    const playButton = (0, _helpers.create)("button", {
-        innerText: "Play",
-        className: "big-button",
-        onclick: onClickPlay
-    });
-    page.append(title, playButton);
-    document.body.appendChild(page);
-};
-const onClickPlay = async ()=>{
-    if ("requestPermission" in DOEvent && typeof DOEvent["requestPermission"] === "function") {
-        const status = await DOEvent.requestPermission();
-        // Stay on the page until permission is granted
-        if (status !== "granted") return;
-    }
-    removeTitle();
-    (0, _draw.renderDraw)();
-};
-
-},{"../../helpers":"adjmJ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","../draw/draw":"6SsNu"}],"adjmJ":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "create", ()=>create);
-const create = (tag, options)=>{
-    const element = document.createElement(tag);
-    Object.assign(element, options);
-    return element;
-};
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
-exports.interopDefault = function(a) {
-    return a && a.__esModule ? a : {
-        default: a
-    };
-};
-exports.defineInteropFlag = function(a) {
-    Object.defineProperty(a, "__esModule", {
-        value: true
-    });
-};
-exports.exportAll = function(source, dest) {
-    Object.keys(source).forEach(function(key) {
-        if (key === "default" || key === "__esModule" || Object.prototype.hasOwnProperty.call(dest, key)) return;
-        Object.defineProperty(dest, key, {
-            enumerable: true,
-            get: function() {
-                return source[key];
-            }
-        });
-    });
-    return dest;
-};
-exports.export = function(dest, destName, get) {
-    Object.defineProperty(dest, destName, {
-        enumerable: true,
-        get: get
-    });
-};
-
 },{}],"6SsNu":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "removeDraw", ()=>removeDraw);
-parcelHelpers.export(exports, "renderDraw", ()=>renderDraw);
 var _gyro = require("../../gyro");
 var _gyroCanvas = require("../../gyroCanvas");
-var _helpers = require("../../helpers");
-let _gyroRef;
-let _canvas;
-const removeDraw = ()=>{
-    document.querySelector("#draw-page")?.remove();
-    document.body.replaceChildren();
-};
-const renderDraw = ()=>{
-    _gyroRef = new (0, _gyro.Gyro)();
-    _canvas = new (0, _gyroCanvas.GyroCanvas)();
-    const page = (0, _helpers.create)("div", {
-        id: "draw-page"
+const _gyroRef = new (0, _gyro.Gyro)();
+const _canvas = new (0, _gyroCanvas.GyroCanvas)();
+window.onload = ()=>{
+    _canvas.registerParent(document.querySelector("#canvas-container"));
+    let _drawButton = document.querySelector("#draw-button");
+    let _requestButton = document.querySelector("#permission");
+    _drawButton?.addEventListener("touchstart", (e)=>{
+        _canvas.isDrawing = true;
+        // Set color the first time
+        _canvas.color = getHSL(e.touches[0].clientX);
     });
-    const canvasContainer = (0, _helpers.create)("div", {
-        id: "canvas-container"
+    _drawButton?.addEventListener("touchmove", (e)=>{
+        // Keep setting the color
+        _canvas.color = getHSL(e.touches[0].clientX);
     });
-    _canvas.registerParent(canvasContainer);
-    const colorCanvas = (0, _helpers.create)("canvas", {
-        id: "color-canvas"
+    _drawButton?.addEventListener("touchend", ()=>{
+        _canvas.isDrawing = false;
     });
-    const calibrateButton = (0, _helpers.create)("button", {
-        id: "calibrate-button",
-        innerText: "Calibrate"
+    setTimeout(()=>{
+        if (!_gyroRef._hasPermission) {
+            _drawButton.style.display = "none";
+            _requestButton.style.display = "block";
+            _requestButton.addEventListener("touchend", ()=>{
+                if ("requestPermission" in DeviceOrientationEvent && typeof DeviceOrientationEvent["requestPermission"] === "function") DeviceOrientationEvent.requestPermission().then((status)=>{
+                    if (status === "granted") {
+                        _gyroRef.listen();
+                        _drawButton.style.display = "block";
+                        _requestButton.style.display = "none";
+                    }
+                });
+            });
+        } else _gyroRef.listen();
+    }, 100);
+    document.querySelector("#calibrate-button")?.addEventListener("touchstart", (e)=>{
+        _gyroRef.startCalibration();
     });
-    page.append(canvasContainer, colorCanvas, calibrateButton);
-    document.body.appendChild(page);
-    let colorContext = colorCanvas.getContext("2d");
-    const gradient = colorContext?.createLinearGradient(0, 200, 400, 200);
-    gradient?.addColorStop(0, "red");
-    gradient?.addColorStop(0.125, "orange");
-    gradient?.addColorStop(0.25, "yellow");
-    gradient?.addColorStop(0.375, "green");
-    gradient?.addColorStop(0.5, "blue");
-    gradient?.addColorStop(0.625, "purple");
-    gradient?.addColorStop(0.75, "black");
-    gradient?.addColorStop(1, "black");
-    colorContext.fillStyle = gradient;
-    colorContext.fillRect(0, 0, 400, 400);
-    colorCanvas.ontouchstart = (e)=>{
-        let xPos = e.touches[0].clientX;
-        if (_canvas) {
-            _canvas.isDrawing = true;
-            let id = colorContext.getImageData(xPos * 300 / _canvas.squarePixels, 0, 1, 1).data;
-            _canvas.color = `rgb(${id[0]},${id[1]},${id[2]})`;
-        }
-    };
-    colorCanvas.ontouchmove = (e)=>{
-        let xPos = e.touches[0].clientX;
-        if (_canvas) {
-            // Keep setting the color
-            let id = colorContext.getImageData(xPos * 300 / _canvas.squarePixels, 0, 1, 1).data;
-            _canvas.color = `rgb(${id[0]},${id[1]},${id[2]})`;
-        }
-    };
-    colorCanvas.ontouchend = ()=>{
-        if (_canvas) _canvas.isDrawing = false;
-    };
-    _gyroRef.listen();
-    calibrateButton.addEventListener("touchstart", (e)=>{
-        if (_gyroRef) _gyroRef.startCalibration();
+    document.querySelector("#calibrate-button")?.addEventListener("touchend", (e)=>{
+        _gyroRef.endCalibration();
     });
-    calibrateButton.addEventListener("touchend", (e)=>{
-        if (_gyroRef) _gyroRef.endCalibration();
+    document.querySelector("#test-btn")?.addEventListener("touchend", (e)=>{
+        const div = document.querySelector("#test-div");
+        div;
+        console.log(div);
     });
     window.requestAnimationFrame(draw);
 };
@@ -744,8 +636,8 @@ const getHSL = (clientX)=>{
     return `hsl(${360 * clientX / window.innerWidth} 100 50)`;
 };
 const draw = ()=>{
-    if (_gyroRef?.isCalibrating()) _gyroRef.calibrateMax();
-    else if (_canvas && _gyroRef) {
+    if (_gyroRef.isCalibrating()) _gyroRef.calibrateMax();
+    else {
         let centerX = _canvas.squarePixels / 2;
         let centerY = _canvas.squarePixels / 2;
         let xPos = centerX + _canvas.squarePixels * _gyroRef.gammaPercent / 2;
@@ -769,7 +661,7 @@ const draw = ()=>{
     window.requestAnimationFrame(draw);
 };
 
-},{"../../gyro":"7669u","../../helpers":"adjmJ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","../../gyroCanvas":"QBQiV"}],"7669u":[function(require,module,exports) {
+},{"../../gyro":"7669u","../../gyroCanvas":"QBQiV"}],"7669u":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Gyro", ()=>Gyro);
@@ -842,41 +734,66 @@ class Gyro {
     }
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"QBQiV":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, "__esModule", {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === "default" || key === "__esModule" || Object.prototype.hasOwnProperty.call(dest, key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
+
+},{}],"QBQiV":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "GyroCanvas", ()=>GyroCanvas);
-var _helpers = require("./helpers");
 class GyroCanvas {
     constructor(){
         this.squarePixels = 1000;
         this.isDrawing = false;
         this.color = "rgb(0,0,0)";
-        const drawLayer = (0, _helpers.create)("canvas", {
-            id: "canvas",
-            className: "canvas",
-            width: this.squarePixels,
-            height: this.squarePixels
-        });
-        const pointerLayer = (0, _helpers.create)("canvas", {
-            id: "pointer-canvas",
-            className: "canvas",
-            width: this.squarePixels,
-            height: this.squarePixels
-        });
+        const drawLayer = document.createElement("canvas");
+        const pointerLayer = document.createElement("canvas");
         this.drawCtx = drawLayer.getContext("2d");
         this.pointerCtx = pointerLayer.getContext("2d");
+        // Assign canvas pixel size
+        drawLayer.height = drawLayer.width = pointerLayer.height = pointerLayer.width = this.squarePixels;
+        drawLayer.className = pointerLayer.className = "canvas";
+        drawLayer.id = "canvas";
+        pointerLayer.id = "pointerCanvas";
     }
     registerParent(parent) {
         if (parent) {
+            const parentElement = parent;
             const cssSize = Math.min(window.innerHeight, window.innerWidth);
-            document.body.style.setProperty("--canvas-size", cssSize + "px");
+            parentElement.style.setProperty("--canvas-size", cssSize + "px");
             parent.appendChild(this.drawCtx.canvas);
             parent.appendChild(this.pointerCtx.canvas);
         }
     }
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./helpers":"adjmJ"}]},["8wG6Z","h7u1C"], "h7u1C", "parcelRequire94c2")
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["kt7pJ","6SsNu"], "6SsNu", "parcelRequire94c2")
 
-//# sourceMappingURL=index.b71e74eb.js.map
+//# sourceMappingURL=draw.18faba7c.js.map
