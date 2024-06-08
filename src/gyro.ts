@@ -1,5 +1,6 @@
 export class Gyro implements Disposable {
   private _isCalibrating: boolean = false;
+  _hasPermission: boolean = false;
 
   /** Is the gyroscope in calibration mode? */
   readonly isCalibrating = () => this._isCalibrating;
@@ -18,11 +19,16 @@ export class Gyro implements Disposable {
 
   constructor() {
     this.calibrateCenter();
-    window.addEventListener('deviceorientation', this.listenToOrientation.bind(this), true);
+    window.addEventListener('deviceorientation', () => (this._hasPermission = true), { once: true });
   }
 
   [Symbol.dispose](): void {
     window.removeEventListener('deviceorientation', this.listenToOrientation.bind(this), true);
+  }
+
+  listen() {
+    window.removeEventListener('deviceorientation', this.listenToOrientation.bind(this), true);
+    window.addEventListener('deviceorientation', this.listenToOrientation.bind(this), true);
   }
 
   private listenToOrientation(e: DeviceOrientationEvent) {
