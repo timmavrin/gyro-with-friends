@@ -31,18 +31,8 @@
 
 #color-canvas {
   width: var(--canvas-size);
+  overscroll-behavior: none;
   flex: 1;
-}
-
-#draw-button {
-  background: -moz-linear-gradient(90deg in hsl longer hue, red, hsl(365 100 50));
-  background: -webkit-linear-gradient(90deg in hsl longer hue, red, hsl(365 100 50));
-  background: linear-gradient(90deg in hsl longer hue, red, hsl(365 100 50));
-  -webkit-user-select: none;
-  user-select: none;
-  width: 100%;
-  height: 400px;
-  font-size: 10vw;
 }
 
 #calibrate-button {

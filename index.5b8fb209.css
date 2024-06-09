@@ -1,0 +1,2 @@
+#draw-page{flex-direction:column;width:100%;height:100%;font-size:larger;display:flex}#canvas-container{border:1px solid gray;width:100%;height:-moz-fit-content;height:fit-content;position:relative}.canvas{width:var(--canvas-size);height:var(--canvas-size);top:0;left:0}#canvas{z-index:0}#pointer-canvas{z-index:1;position:absolute}#color-canvas{width:var(--canvas-size);overscroll-behavior:none;flex:1}#calibrate-button{-webkit-user-select:none;user-select:none;width:100%;height:400px;font-size:10vw}
+/*# sourceMappingURL=index.5b8fb209.css.map */

@@ -696,7 +696,7 @@ const renderDraw = ()=>{
     });
     const calibrateButton = (0, _helpers.create)("button", {
         id: "calibrate-button",
-        innerText: "Calibrate"
+        innerText: "Calibrate1"
     });
     page.append(canvasContainer, colorCanvas, calibrateButton);
     document.body.appendChild(page);
@@ -721,6 +721,7 @@ const renderDraw = ()=>{
         }
     };
     colorCanvas.ontouchmove = (e)=>{
+        e.preventDefault();
         let xPos = e.touches[0].clientX;
         if (_canvas) {
             // Keep setting the color
@@ -739,9 +740,6 @@ const renderDraw = ()=>{
         if (_gyroRef) _gyroRef.endCalibration();
     });
     window.requestAnimationFrame(draw);
-};
-const getHSL = (clientX)=>{
-    return `hsl(${360 * clientX / window.innerWidth} 100 50)`;
 };
 const draw = ()=>{
     if (_gyroRef?.isCalibrating()) _gyroRef.calibrateMax();
