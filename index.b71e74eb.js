@@ -584,58 +584,186 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 }
 
 },{}],"h7u1C":[function(require,module,exports) {
-var _title = require("./pages/title/title");
+var _lobby = require("./pages/lobby/lobby");
 window.onload = ()=>{
-    (0, _title.renderTitle)();
+    //renderTitle();
+    (0, _lobby.renderLobby)();
 };
 
-},{"./pages/title/title":"5VyRa"}],"5VyRa":[function(require,module,exports) {
+},{"./pages/lobby/lobby":"fBkPN"}],"fBkPN":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "removeTitle", ()=>removeTitle);
-parcelHelpers.export(exports, "renderTitle", ()=>renderTitle);
+parcelHelpers.export(exports, "removeLobby", ()=>removeLobby);
+parcelHelpers.export(exports, "renderLobby", ()=>renderLobby);
 var _helpers = require("../../helpers");
-var _draw = require("../draw/draw");
-const DOEvent = DeviceOrientationEvent;
-const removeTitle = ()=>{
-    document.querySelector("#title-page")?.remove();
+const hostConnection = new RTCPeerConnection({
+    iceServers: []
+});
+const hostChannel = hostConnection.createDataChannel("dc");
+hostConnection.addEventListener("connectionstatechange", (e)=>{
+    console.log("Connection State Change: ", e);
+    document.querySelector("#peer-container")?.append((0, _helpers.create)("p", {
+        className: "peer",
+        innerText: e.target.connectionState
+    }));
+});
+hostConnection.addEventListener("signalingstatechange", (e)=>{
+    console.log("Signal State Change: ", e);
+});
+hostConnection.addEventListener("negotiationneeded", (e)=>{
+    console.log("Negotiation Needed: ", e);
+});
+hostChannel.addEventListener("open", (e)=>{
+    console.log("Host Opened", e);
+    document.querySelector("#peer-container")?.append((0, _helpers.create)("p", {
+        innerText: "peer",
+        className: "peer"
+    }));
+});
+hostChannel.addEventListener("message", (e)=>{
+    console.log("Data channel message", e);
+});
+const joinConnection = new RTCPeerConnection({
+    iceServers: []
+});
+const joinChannel = joinConnection.createDataChannel("dc");
+joinChannel.addEventListener("open", (e)=>{
+    console.log("Join Opened", e);
+});
+joinConnection.addEventListener("connectionstatechange", (e)=>{
+    console.log("Connection State Change: ", e);
+    document.querySelector("#peer-container")?.append((0, _helpers.create)("p", {
+        className: "peer",
+        innerText: e.target.connectionState
+    }));
+});
+const removeLobby = ()=>{
+    document.querySelector("#lobby-page")?.remove();
     document.body.replaceChildren();
 };
-const renderTitle = ()=>{
+const renderLobby = ()=>{
     const page = (0, _helpers.create)("div", {
-        id: "title-page"
+        id: "lobby-page"
     });
     const title = (0, _helpers.create)("h1", {
-        innerText: "Gyro",
-        className: "title-header"
+        innerText: "Lobby",
+        className: "lobby-header"
     });
-    const playButton = (0, _helpers.create)("button", {
-        innerText: "Play",
+    const roomPasswordInput = (0, _helpers.create)("input", {
+        type: "text",
+        placeholder: "What's the room password?",
+        id: "room-password"
+    });
+    const hostButton = (0, _helpers.create)("button", {
         className: "big-button",
-        onclick: onClickPlay
+        innerText: "Host",
+        id: "host",
+        onclick: onHost
     });
-    page.append(title, playButton);
+    const orSeparator = (0, _helpers.create)("h1", {
+        innerText: "or",
+        className: "or-separator"
+    });
+    const joinButton = (0, _helpers.create)("button", {
+        className: "big-button",
+        innerText: "Join",
+        id: "join",
+        onclick: onJoin
+    });
+    page.append(title, roomPasswordInput, hostButton, orSeparator, joinButton);
     document.body.appendChild(page);
 };
-const onClickPlay = async ()=>{
-    if ("requestPermission" in DOEvent && typeof DOEvent["requestPermission"] === "function") {
-        const status = await DOEvent.requestPermission();
-        // Stay on the page until permission is granted
-        if (status !== "granted") return;
+const clearButtons = ()=>{
+    const lobbyPage = document.querySelector("#lobby-page");
+    lobbyPage?.append((0, _helpers.create)("h3", {
+        innerText: "Waiting...",
+        className: "status-message"
+    }));
+    document.querySelector("#host")?.remove();
+    document.querySelector(".or-separator")?.remove();
+    document.querySelector("#join")?.remove();
+    lobbyPage?.append((0, _helpers.create)("div", {
+        id: "peer-container"
+    }));
+};
+const getUrl = ()=>{
+    const password = document.querySelector("#room-password");
+    if (!password.value) {
+        password.style.border = "1px solid red";
+        setTimeout(()=>password.style.border = "revert", 1000);
+        return [];
     }
-    removeTitle();
-    (0, _draw.renderDraw)();
+    // Share the offer
+    const baseUrl = "https://demo.httprelay.io/link/";
+    const hostSignalKey = `$master$${password.value}`;
+    const joinSignalKey = `$slave$${password.value}`;
+    return [
+        baseUrl + hostSignalKey,
+        baseUrl + joinSignalKey
+    ];
+};
+const onHost = async ()=>{
+    clearButtons();
+    const [hostUrl, joinUrl] = getUrl();
+    if (!hostUrl || !joinUrl) return;
+    const connectionState = (0, _helpers.create)("p", {
+        innerText: "Connecting",
+        className: "peer",
+        id: "#connection"
+    });
+    document.querySelector("#peer-container")?.append(connectionState);
+    const offer = await hostConnection.createOffer();
+    await hostConnection.setLocalDescription(offer);
+    fetch(hostUrl, {
+        method: "POST",
+        body: JSON.stringify(offer)
+    }).then(()=>{
+        // The promise when the offer is picked up by the Joiner.
+        // We now wait for the joiner to submit their answer
+        fetch(joinUrl).then((res)=>res.json()).then(async (answer)=>{
+            await hostConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        });
+    });
+};
+const onJoin = ()=>{
+    clearButtons();
+    const [hostUrl, joinUrl] = getUrl();
+    if (!hostUrl || !joinUrl) return;
+    const connectionState = (0, _helpers.create)("p", {
+        innerText: "Connecting",
+        className: "peer",
+        id: "#connection"
+    });
+    document.querySelector("#peer-container")?.append(connectionState);
+    fetch(hostUrl).then((res)=>res.json()).then(async (offer)=>{
+        await joinConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await joinConnection.createAnswer();
+        await joinConnection.setLocalDescription(answer);
+        await fetch(joinUrl, {
+            method: "POST",
+            body: JSON.stringify(answer)
+        });
+    });
 };
 
-},{"../../helpers":"adjmJ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","../draw/draw":"6SsNu"}],"adjmJ":[function(require,module,exports) {
+},{"../../helpers":"adjmJ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"adjmJ":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "create", ()=>create);
+parcelHelpers.export(exports, "hashCode", ()=>hashCode);
+parcelHelpers.export(exports, "getIp", ()=>getIp);
 const create = (tag, options)=>{
     const element = document.createElement(tag);
     Object.assign(element, options);
     return element;
 };
+const hashCode = (s)=>{
+    return s.split("").reduce((a, b)=>{
+        a = (a << 5) - a + b.charCodeAt(0);
+        return a & a;
+    }, 0);
+};
+const getIp = ()=>fetch("https://checkip.amazonaws.com/").then((r)=>r.text());
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
 exports.interopDefault = function(a) {
@@ -667,214 +795,6 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}],"6SsNu":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "removeDraw", ()=>removeDraw);
-parcelHelpers.export(exports, "renderDraw", ()=>renderDraw);
-var _gyro = require("../../gyro");
-var _gyroCanvas = require("../../gyroCanvas");
-var _helpers = require("../../helpers");
-let _gyroRef;
-let _canvas;
-const removeDraw = ()=>{
-    document.querySelector("#draw-page")?.remove();
-    document.body.replaceChildren();
-};
-const renderDraw = ()=>{
-    _gyroRef = new (0, _gyro.Gyro)();
-    _canvas = new (0, _gyroCanvas.GyroCanvas)();
-    const page = (0, _helpers.create)("div", {
-        id: "draw-page"
-    });
-    const canvasContainer = (0, _helpers.create)("div", {
-        id: "canvas-container"
-    });
-    _canvas.registerParent(canvasContainer);
-    const colorCanvas = (0, _helpers.create)("canvas", {
-        id: "color-canvas"
-    });
-    const calibrateButton = (0, _helpers.create)("button", {
-        id: "calibrate-button",
-        innerText: "Calibrate1"
-    });
-    page.append(canvasContainer, colorCanvas, calibrateButton);
-    document.body.appendChild(page);
-    let colorContext = colorCanvas.getContext("2d");
-    const gradient = colorContext?.createLinearGradient(0, 200, 400, 200);
-    gradient?.addColorStop(0, "red");
-    gradient?.addColorStop(0.125, "orange");
-    gradient?.addColorStop(0.25, "yellow");
-    gradient?.addColorStop(0.375, "green");
-    gradient?.addColorStop(0.5, "blue");
-    gradient?.addColorStop(0.625, "purple");
-    gradient?.addColorStop(0.75, "black");
-    gradient?.addColorStop(1, "black");
-    colorContext.fillStyle = gradient;
-    colorContext.fillRect(0, 0, 400, 400);
-    colorCanvas.ontouchstart = (e)=>{
-        let xPos = e.touches[0].clientX;
-        if (_canvas) {
-            _canvas.isDrawing = true;
-            let id = colorContext.getImageData(xPos * 300 / _canvas.squarePixels, 0, 1, 1).data;
-            _canvas.color = `rgb(${id[0]},${id[1]},${id[2]})`;
-        }
-    };
-    colorCanvas.ontouchmove = (e)=>{
-        e.preventDefault();
-        let xPos = e.touches[0].clientX;
-        if (_canvas) {
-            // Keep setting the color
-            let id = colorContext.getImageData(xPos * 300 / _canvas.squarePixels, 0, 1, 1).data;
-            _canvas.color = `rgb(${id[0]},${id[1]},${id[2]})`;
-        }
-    };
-    colorCanvas.ontouchend = ()=>{
-        if (_canvas) _canvas.isDrawing = false;
-    };
-    _gyroRef.listen();
-    calibrateButton.addEventListener("touchstart", (e)=>{
-        if (_gyroRef) _gyroRef.startCalibration();
-    });
-    calibrateButton.addEventListener("touchend", (e)=>{
-        if (_gyroRef) _gyroRef.endCalibration();
-    });
-    window.requestAnimationFrame(draw);
-};
-const draw = ()=>{
-    if (_gyroRef?.isCalibrating()) _gyroRef.calibrateMax();
-    else if (_canvas && _gyroRef) {
-        let centerX = _canvas.squarePixels / 2;
-        let centerY = _canvas.squarePixels / 2;
-        let xPos = centerX + _canvas.squarePixels * _gyroRef.gammaPercent / 2;
-        let yPos = centerY + _canvas.squarePixels * _gyroRef.betaPercent / 2;
-        if (_canvas.isDrawing) {
-            _canvas.drawCtx.beginPath();
-            _canvas.drawCtx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
-            _canvas.drawCtx.fillStyle = _canvas.color;
-            _canvas.drawCtx.fill();
-        }
-        _canvas.pointerCtx.clearRect(0, 0, _canvas.squarePixels, _canvas.squarePixels);
-        _canvas.pointerCtx.beginPath();
-        _canvas.pointerCtx.arc(xPos, yPos, 20, 0, 2 * Math.PI, true);
-        _canvas.pointerCtx.strokeStyle = "#333";
-        _canvas.pointerCtx.stroke();
-        _canvas.pointerCtx.beginPath();
-        _canvas.pointerCtx.arc(xPos, yPos, 5, 0, 2 * Math.PI, true);
-        _canvas.pointerCtx.fillStyle = "#000";
-        _canvas.pointerCtx.fill();
-    }
-    window.requestAnimationFrame(draw);
-};
-
-},{"../../gyro":"7669u","../../helpers":"adjmJ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","../../gyroCanvas":"QBQiV"}],"7669u":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Gyro", ()=>Gyro);
-class Gyro {
-    constructor(){
-        this._isCalibrating = false;
-        this._hasPermission = false;
-        /** Is the gyroscope in calibration mode? */ this.isCalibrating = ()=>this._isCalibrating;
-        /** Y-Axis, Percentage of current beta angle from calibrated 0 - Max angle. */ this.betaPercent = 0;
-        /** X-Axis, Percentage of current gamma angle from calibrated 0 - Max angle. */ this.gammaPercent = 0;
-        // Internal Stuff
-        this.beta = 0;
-        this.betaOffset = 0;
-        this.betaMax = 45;
-        this.gamma = 0;
-        this.gammaOffset = 0;
-        this.gammaMax = 45;
-        this.calibrateCenter();
-        window.addEventListener("deviceorientation", ()=>this._hasPermission = true, {
-            once: true
-        });
-    }
-    [Symbol.dispose]() {
-        window.removeEventListener("deviceorientation", this.listenToOrientation.bind(this), true);
-    }
-    listen() {
-        window.removeEventListener("deviceorientation", this.listenToOrientation.bind(this), true);
-        window.addEventListener("deviceorientation", this.listenToOrientation.bind(this), true);
-    }
-    listenToOrientation(e) {
-        if (e.beta && e.gamma) {
-            this.beta = e.beta - this.betaOffset;
-            if (this.beta > 180) this.beta = -180 - this.beta;
-            else if (this.beta < -180) this.beta = -(180 - this.beta);
-            this.gamma = e.gamma - this.gammaOffset;
-            if (this.gamma > 90) this.gamma = -90 - this.gamma;
-            else if (this.gamma < -90) this.gamma = -(90 - this.gamma);
-            this.betaPercent = 0;
-            if (this.beta < 0) this.betaPercent = Math.max(-this.betaMax, this.beta) / this.betaMax;
-            else if (this.beta > 0) this.betaPercent = Math.min(this.betaMax, this.beta) / this.betaMax;
-            this.gammaPercent = 0;
-            if (this.gamma < 0) this.gammaPercent = Math.max(-this.gammaMax, this.gamma) / this.gammaMax;
-            else if (this.gamma > 0) this.gammaPercent = Math.min(this.gammaMax, this.gamma) / this.gammaMax;
-        }
-    }
-    /**Calibrates the starting angles that correspond to the reticle being at the center of the screen.*/ calibrateCenter() {
-        window.addEventListener("deviceorientation", (e)=>{
-            this.betaOffset = e.beta ?? 0;
-            this.gammaOffset = e.gamma ?? 0;
-        }, {
-            once: true
-        });
-    }
-    startCalibration() {
-        this._isCalibrating = true;
-        this.calibrateCenter();
-        this.betaMax = 5;
-        this.gammaMax = 5;
-    }
-    endCalibration() {
-        this._isCalibrating = false;
-    }
-    /**In calibration mode, this function is called multiple times.
-   * As the user tilts the device at comfortable angles, an absolute value of the angles are recorded.
-   * Calibrating for small tilts makes it more sensitive.
-   * Calibrating big tilts make it more precise
-   */ calibrateMax() {
-        this.betaMax = Math.max(this.betaMax, Math.abs(this.beta));
-        this.gammaMax = Math.max(this.gammaMax, Math.abs(this.gamma));
-    }
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"QBQiV":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "GyroCanvas", ()=>GyroCanvas);
-var _helpers = require("./helpers");
-class GyroCanvas {
-    constructor(){
-        this.squarePixels = 1000;
-        this.isDrawing = false;
-        this.color = "rgb(0,0,0)";
-        const drawLayer = (0, _helpers.create)("canvas", {
-            id: "canvas",
-            className: "canvas",
-            width: this.squarePixels,
-            height: this.squarePixels
-        });
-        const pointerLayer = (0, _helpers.create)("canvas", {
-            id: "pointer-canvas",
-            className: "canvas",
-            width: this.squarePixels,
-            height: this.squarePixels
-        });
-        this.drawCtx = drawLayer.getContext("2d");
-        this.pointerCtx = pointerLayer.getContext("2d");
-    }
-    registerParent(parent) {
-        if (parent) {
-            const cssSize = Math.min(window.innerHeight, window.innerWidth);
-            document.body.style.setProperty("--canvas-size", cssSize + "px");
-            parent.appendChild(this.drawCtx.canvas);
-            parent.appendChild(this.pointerCtx.canvas);
-        }
-    }
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./helpers":"adjmJ"}]},["8wG6Z","h7u1C"], "h7u1C", "parcelRequire94c2")
+},{}]},["8wG6Z","h7u1C"], "h7u1C", "parcelRequire94c2")
 
 //# sourceMappingURL=index.b71e74eb.js.map
